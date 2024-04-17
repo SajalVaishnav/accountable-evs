@@ -1,7 +1,7 @@
 import prisma from "@/prisma/prismaSingleton";
-import { streamMeters } from "@/app/api/create-new-meter-readings-worker/route";
 import { Meter } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
+import streamMeters from "@/prisma/meters/streamMeters";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     await Promise.all(promises);
   }
 
-  await prisma.DailyAverageDeduction.create({
+  await prisma.dailyAverageDeduction.create({
     data: {
       totalDeduction,
       metersCount: count,

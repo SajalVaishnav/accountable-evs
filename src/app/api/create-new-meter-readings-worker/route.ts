@@ -3,32 +3,7 @@ import prisma from "@/prisma/prismaSingleton";
 import { Readable } from "stream";
 import { Meter } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-
-// reference: https://github.com/prisma/prisma/issues/5055
-export function streamMeters(batchSize: number) {
-  let cursorId: string | undefined = undefined;
-  return new Readable({
-    objectMode: true,
-    async read() {
-      try {
-        const items = await prisma.meter.findMany({
-          take: batchSize,
-          skip: cursorId ? 1 : 0,
-          cursor: cursorId ? { id: cursorId } : undefined,
-        });
-        if (items.length === 0) {
-          this.push(null);
-        } else {
-          this.push(items);
-          cursorId = items[items.length - 1].id;
-        }
-      } catch (err: any) {
-        this.destroy(err);
-      }
-    },
-  });
-}
-
+import streamMeters from "@/prisma/meters/streamMeters";
 // Create new meter readings for all meters
 // runs every day
 export async function GET(request: NextRequest) {
