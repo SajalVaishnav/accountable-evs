@@ -15,8 +15,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  try {
-  	const reading = await getLatestReading(meterId, password);
+  const {reading, error} = await getLatestReading(meterId, password);
+  if (reading) {
 	return NextResponse.json({
 	  reading: reading,
 	  message: `Successfully fetched reading for meterId ${meterId}`,
@@ -24,12 +24,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 	{
 	  status: 200,
 	});
-  } catch (error) {
+  } else {
 	return NextResponse.json({
-		message: `Failed to fetch reading for meterId ${meterId}`,
+		message: error,
 	},
 	{
-		status: 500,
+		status: 405,
 	});
   }
 }

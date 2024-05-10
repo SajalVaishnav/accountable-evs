@@ -43,22 +43,17 @@ const MainPage = () => {
     setShowDiscrepancyReport(false);
     setIsLoading(true);
 
-    try {
-      const readings = await getMeterReadings(meterId, password);
+	const { readings, error} = await getMeterReadings(meterId, password);
+    if (readings) {
       setMeterData(readings);
       setShowReadingsTable(true);
       setShowDiscrepancyReport(true);
-    } catch (error) {
+    } else {
       setSnackbarSeverity('error');
-      if (error instanceof Error && error.message.split(':')[0] == 'AuthError') {
-        setSnackbarMessage(`Invalid meter ID or password`);
-      } else {
-        setSnackbarMessage('Failed to fetch meter readings. Please try again later.');
-      }
+	  setSnackbarMessage(error);
       setSnackbarOpen(true);
-    } finally {
+    } 
       setIsLoading(false);
-    }
   };
 
   const sendComplaintEmail = async (emailBody: string) => {
@@ -74,7 +69,7 @@ const MainPage = () => {
   };
 
   return (
-    <Box display='flex' flexDirection='column' alignItems='center' sx={{ minWidth: '200px', marginX: '16px' }}>
+    <Box display='flex' flexDirection='column' alignItems='center' sx={{ minWidth: '200px', marginX: '16px', marginBottom: '16px' }}>
       <Card sx={{ mt: 4, minWidth: '200px', maxWidth: '400px' }}>
         <CardContent>
           <Typography variant='h5' component='div' gutterBottom>

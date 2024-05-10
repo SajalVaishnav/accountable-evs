@@ -1,34 +1,64 @@
 "use server";
 
+import { AuthenticationError } from "@/app/common/Error/Errors";
+import { MeterData } from "@/app/page";
 import prisma from "@/prisma/prismaSingleton";
 import { getMeterCreditFromMeteridPassword } from "@/server/EvsCrawler";
 
 const READING_EXPIRATION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-export const getMeterReadings = async (meterId: string, password: string) => {
+interface ServerResponse {
+  error: string;
+}
+
+interface MeterReadingsResponse extends ServerResponse {
+  readings: MeterData[] | null;
+}
+
+interface LatestReadingResponse extends ServerResponse {
+  reading: MeterData | null;
+}
+
+export const getMeterReadings = async (
+  meterId: string,
+  password: string
+): Promise<MeterReadingsResponse> => {
   const meter = await prisma.meter.findUnique({
     where: {
       meterId,
-	  password
+      password,
     },
     include: {
-		meterReadings: true
+      meterReadings: true,
     },
   });
 
   if (!meter) {
-    const reading = await createNewMeterAndReading(meterId, password);
-    return [reading];
+    try {
+      const reading = await createNewMeterAndReading(meterId, password);
+      return { readings: [reading], error: "" };
+    } catch (error) {
+      if (error instanceof AuthenticationError) {
+        return { readings: null, error: "AuthError: Invalid meterId or password" };
+      }
+      return {
+        readings: null,
+        error: `Failed to get meter readings for meter ${meterId}`,
+      };
+    }
   }
 
-  return meter.meterReadings;
+  return { readings: meter.meterReadings, error: "" };
 };
 
-export const getLatestReading = async (meterId: string, password: string) => {
+export const getLatestReading = async (
+  meterId: string,
+  password: string
+): Promise<LatestReadingResponse> => {
   const meter = await prisma.meter.findUnique({
     where: {
       meterId,
-	  password
+      password,
     },
     include: {
       meterReadings: {
@@ -41,7 +71,18 @@ export const getLatestReading = async (meterId: string, password: string) => {
   });
 
   if (!meter) {
-    return await createNewMeterAndReading(meterId, password);
+    try {
+		const reading = await createNewMeterAndReading(meterId, password);
+		return { reading: reading, error: "" };
+	  } catch (error) {
+		if (error instanceof AuthenticationError) {
+		  return { reading: null, error: "AuthError" };
+		}
+		return {
+		  reading: null,
+		  error: `Failed to get meter readings for meter ${meterId}`,
+		};
+	  }
   }
 
   const latestReading = meter.meterReadings[0];
@@ -49,14 +90,10 @@ export const getLatestReading = async (meterId: string, password: string) => {
   const currentTime = Date.now();
 
   if (currentTime - lastReadingUpdatedAt < READING_EXPIRATION_DURATION) {
-    return latestReading;
+    return { reading: latestReading, error: "" };
   }
 
   const newReading = await getMeterCreditFromMeteridPassword(meterId, password);
-
-  if (newReading === undefined) {
-    throw new Error(`Failed to fetch reading for meterId ${meterId}`);
-  }
 
   const createdReading = await prisma.meterReadings.create({
     data: {
@@ -74,31 +111,27 @@ export const getLatestReading = async (meterId: string, password: string) => {
     },
   });
 
-  return createdReading;
+  return { reading: createdReading, error: "" };
 };
 
-const createNewMeterAndReading = async (meterId: string, password: string) => {
+const createNewMeterAndReading = async (meterId: string, password: string): Promise<MeterData> => {
   const reading = await getMeterCreditFromMeteridPassword(meterId, password);
-
-  if (reading === undefined || reading === null) {
-    throw new Error(`Failed to fetch reading for meterId ${meterId}`);
-  }
 
   const createdReading = await prisma.meterReadings.create({
     data: {
-	  reading,
-	  meter: {
-		create: {
-		  meterId,
-		  password,
-		  readingUpdatedAt: new Date(),
-		},
-	  }
+      reading,
+      meter: {
+        create: {
+          meterId,
+          password,
+          readingUpdatedAt: new Date(),
+        },
+      },
     },
-	include: {
-		meter: true
-	}
+    include: {
+      meter: true,
+    },
   });
 
-  return createdReading;
+  return {id: createdReading.id, meterId: createdReading.meterId, createdAt: createdReading.createdAt, reading: createdReading.reading};
 };

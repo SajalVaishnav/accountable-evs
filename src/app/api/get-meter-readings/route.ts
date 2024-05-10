@@ -17,25 +17,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     );
   }
-  try {
-    const readings = await getMeterReadings(meterId, password);
-    return NextResponse.json(
-      {
-        readings: readings,
-        message: `Successfully fetched readings for meterId ${meterId}`,
-      },
-      {
-        status: 200,
-      }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      {
-        message: `Failed to fetch readings for meterId ${meterId}`,
-      },
-      {
-        status: 500,
-      }
-    );
+
+  const {readings, error} = await getMeterReadings(meterId, password);
+  if (readings) {
+	return NextResponse.json({
+	  readings: readings,
+	  message: `Successfully fetched reading for meterId ${meterId}`,
+	},
+	{
+	  status: 200,
+	});
+  } else {
+	return NextResponse.json({
+		message: error,
+	},
+	{
+		status: 405,
+	});
   }
 }
