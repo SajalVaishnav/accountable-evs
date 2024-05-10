@@ -16,7 +16,7 @@ import ReadingDataTable from '@/app/common/components/ReadingsDataTable';
 import DiscrepancyReport from '@/app/common/components/DiscrepancyReport';
 import { getMeterReadings } from '@/server/MeterReadings';
 import { sendEmailUsingMailto } from '@/server/Mailer';
-import { TooManyEmailRequestsError } from '@/app/common/Error/Errors';
+import { AuthenticationError, TooManyEmailRequestsError } from '@/app/common/Error/Errors';
 
 export interface MeterData {
   id: number;
@@ -50,8 +50,8 @@ const MainPage = () => {
       setShowDiscrepancyReport(true);
     } catch (error) {
       setSnackbarSeverity('error');
-      if (error instanceof TooManyEmailRequestsError) {
-        setSnackbarMessage(`Too many requests for meter ${meterId}`);
+      if (error instanceof AuthenticationError) {
+        setSnackbarMessage(`Invalid meter ID or password`);
       } else {
         setSnackbarMessage('Failed to fetch meter readings. Please try again later.');
       }
