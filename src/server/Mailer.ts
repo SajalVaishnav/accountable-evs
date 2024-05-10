@@ -2,7 +2,7 @@
 
 import nodemailer from 'nodemailer';
 import prisma from '@/prisma/prismaSingleton';
-import { TooManyEmailRequestsError } from '@/app/page';
+import { TooManyEmailRequestsError } from '@/app/common/Error/Errors';
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.sendgrid.net',

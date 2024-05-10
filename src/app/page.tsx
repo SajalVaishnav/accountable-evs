@@ -16,19 +16,13 @@ import ReadingDataTable from '@/app/common/components/ReadingsDataTable';
 import DiscrepancyReport from '@/app/common/components/DiscrepancyReport';
 import { getMeterReadings } from '@/server/MeterReadings';
 import { sendEmailUsingMailto } from '@/server/Mailer';
+import { TooManyEmailRequestsError } from '@/app/common/Error/Errors';
 
 export interface MeterData {
   id: number;
   meterId: string;
   createdAt: Date;
   reading: number;
-}
-
-export class TooManyEmailRequestsError extends Error {
-  constructor(meterId: string) {
-    super(`Too many requests for meter ${meterId}`);
-    this.name = 'TooManyEmailRequestsError';
-  }
 }
 
 const MainPage = () => {

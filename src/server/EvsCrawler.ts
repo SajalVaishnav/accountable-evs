@@ -1,19 +1,8 @@
 import axios, { AxiosResponse } from "axios";
 import * as cheerio from "cheerio";
 
-class AuthenticationError extends Error {
-  constructor(meterId: string) {
-    super(`Failed to authenticate meter ${meterId}`);
-    this.name = "AuthenticationError";
-  }
-}
+import { AuthenticationError, ParsingError } from "@/app/common/Error/Errors";
 
-class ParsingError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ParsingError";
-  }
-}
 
 const getAuthRequestConfig = (meterId: string, password: string) => ({
   url: "https://nus-utown.evs.com.sg/EVSEntApp-war/loginServlet",
