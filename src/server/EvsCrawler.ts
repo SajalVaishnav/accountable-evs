@@ -57,17 +57,9 @@ const getAuthStatusAndCookie = async (meterId: string, password: string): Promis
 };
 
 export const getMeterCreditFromMeteridPassword = async (meterId: string, password: string): Promise<number> => {
-  try {
     const { authStatus, cookie } = await getAuthStatusAndCookie(meterId, password);
     if (!authStatus || !cookie) {
       throw new AuthenticationError(meterId);
     }
     return await getMeterCreditFromAuthCookie(cookie);
-  } catch (error) {
-    if (error instanceof AuthenticationError || error instanceof ParsingError) {
-      throw error;
-    }
-    console.error("An unexpected error occurred:", error);
-    throw error;
-  }
 };

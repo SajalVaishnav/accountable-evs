@@ -50,7 +50,7 @@ const MainPage = () => {
       setShowDiscrepancyReport(true);
     } catch (error) {
       setSnackbarSeverity('error');
-      if (error instanceof AuthenticationError) {
+      if (error instanceof Error && error.message.split(':')[0] == 'AuthError') {
         setSnackbarMessage(`Invalid meter ID or password`);
       } else {
         setSnackbarMessage('Failed to fetch meter readings. Please try again later.');

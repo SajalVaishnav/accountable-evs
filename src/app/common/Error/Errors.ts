@@ -1,20 +1,17 @@
 export class TooManyEmailRequestsError extends Error {
   constructor(meterId: string) {
-    super(`Too many requests for meter ${meterId}`);
-    this.name = "TooManyEmailRequestsError";
+    super(`TooManyEmailRequestsError`);
   }
 }
 
 export class AuthenticationError extends Error {
   constructor(meterId: string) {
-    super(`Failed to authenticate meter ${meterId}`);
-    this.name = "AuthenticationError";
+    super(`AuthError: Failed to authenticate meter ${meterId}`);
   }
 }
 
 export class ParsingError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = "ParsingError";
+    super(`ParsingError: ${message}`);
   }
 }
