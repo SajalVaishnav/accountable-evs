@@ -9,6 +9,7 @@ export const getMeterReadings = async (meterId: string, password: string) => {
   const meter = await prisma.meter.findUnique({
     where: {
       meterId,
+	  password
     },
     include: {
 		meterReadings: true
@@ -27,6 +28,7 @@ export const getLatestReading = async (meterId: string, password: string) => {
   const meter = await prisma.meter.findUnique({
     where: {
       meterId,
+	  password
     },
     include: {
       meterReadings: {
