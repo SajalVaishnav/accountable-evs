@@ -5,32 +5,42 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model Meter {
-  id            String          @id @default(cuid())
-  meterId       String          @unique
-  password      String
-  meterReadings MeterReadings[]
+    id                          String          @id @default(cuid())
+    meterId                     String          @unique
+    password                    String
+    readingUpdatedAt            DateTime        @default(dbgenerated("NOW() - INTERVAL '1 day'"))
+    readingCountedIntoAverageAt DateTime        @default(dbgenerated("NOW() - INTERVAL '1 day'"))
+    sentEmailAt                 DateTime        @default(dbgenerated("NOW() - INTERVAL '1 day'"))
+    meterReadings               MeterReadings[]
+
+    @@index([readingUpdatedAt(sort: Desc)])
+    @@index([readingCountedIntoAverageAt])
 }
 
 model MeterReadings {
-  id        String   @id @default(cuid())
-  meterId   String
-  reading   Float
-  meter     Meter    @relation(fields: [meterId], references: [meterId])
-  createdAt DateTime @default(now())
+    id        Int      @id @default(autoincrement())
+    meterId   String
+    reading   Float
+    meter     Meter    @relation(fields: [meterId], references: [meterId])
+    createdAt DateTime @default(now())
+
+    @@index([createdAt(sort: Desc)])
 }
 
 model DailyAverageDeduction {
-  id             String   @id @default(cuid())
-  totalDeduction Float
-  metersCount    Int
-  createdOn      DateTime @default(now())
+    id             String   @id @default(cuid())
+    totalDeduction Float
+    metersCount    Int
+    createdAt      DateTime @default(now())
+
+    @@index([createdAt(sort: Desc)])
 }
