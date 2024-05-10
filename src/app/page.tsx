@@ -74,9 +74,8 @@ const MainPage = () => {
   };
 
   return (
-    <Box display='flex' flexDirection='column' alignItems='center'>
-
-      <Card sx={{ mt: 4, width: '400px' }}>
+    <Box display='flex' flexDirection='column' alignItems='center' sx={{ minWidth: '200px', marginX: '16px' }}>
+      <Card sx={{ mt: 4, minWidth: '200px', maxWidth: '400px' }}>
         <CardContent>
           <Typography variant='h5' component='div' gutterBottom>
             Login
@@ -113,13 +112,13 @@ const MainPage = () => {
       </Card>
 
       {showReadingsTable && meterData && (
-        <Box sx={{ mt: 4, width: '400px' }}>
+        <Box sx={{ mt: 4, minWidth: '200px', maxWidth: '400px' }}>
           <ReadingDataTable data={meterData} />
         </Box>
       )}
 
       {showDiscrepancyReport && (
-        <Box sx={{ mt: 4, width: '400px' }}>
+        <Box sx={{ mt: 4, minWidth: '200px', maxWidth: '400px' }}>
           <DiscrepancyReport meterId={meterId} onSendEmail={sendComplaintEmail} />
         </Box>
       )}
