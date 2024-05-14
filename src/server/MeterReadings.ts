@@ -13,7 +13,7 @@ interface ServerResponse {
   message: string;
 }
 
-interface MeterReadingsResponse extends ServerResponse {
+export interface MeterReadingsResponse extends ServerResponse {
   readings: MeterData[] | null;
 }
 

@@ -14,9 +14,8 @@ import {
 
 import ReadingDataTable from '@/app/common/components/ReadingsDataTable';
 import DiscrepancyReport from '@/app/common/components/DiscrepancyReport';
-import { getMeterReadings } from '@/server/MeterReadings';
+import { getMeterReadings, MeterReadingsResponse } from '@/server/MeterReadings';
 import { sendEmailUsingMailto } from '@/server/Mailer';
-import { AuthenticationError, TooManyEmailRequestsError } from '@/app/common/Error/Errors';
 
 export interface MeterData {
   id: number;
@@ -44,35 +43,40 @@ const MainPage = () => {
 	setShowDiscrepancyReport(false);
 	setIsLoading(true);
   
-	// Create a timeout promise that rejects after 30 seconds
-	const timeout = new Promise((_, reject) =>
-	  setTimeout(() => reject(new Error('Request timed out')), 30000)
+	const timeout = new Promise<string>((resolve, _) =>
+	  setTimeout(() => resolve("Request timed out. Please try again later."), 20000)
 	);
   
 	try {
-	  // Use Promise.race to wait for either getMeterReadings or the timeout promise
-	  const { readings, error, message } = await Promise.race([
-		getMeterReadings(meterId, password),
-		timeout,
-	  ]);
+	  const response = await Promise.race([getMeterReadings(meterId, password), timeout]);
   
-	  if (readings && readings.length > 0) {
-		setMeterData(readings);
-		setShowReadingsTable(true);
-		setShowDiscrepancyReport(true);
-	  } else if (error !== "") {
-		setSnackbarSeverity('error');
-		setSnackbarMessage(error);
+	  if (typeof response === "string") {
+		// Timeout occurred
+		setSnackbarSeverity("error");
+		setSnackbarMessage(response);
 		setSnackbarOpen(true);
-	  } else if (message !== "") {
-		setSnackbarSeverity('success');
-		setSnackbarMessage(message);
-		setSnackbarOpen(true);
+	  } else {
+		// getMeterReadings resolved
+		const { readings, error, message } = response as MeterReadingsResponse;
+  
+		if (readings && readings.length > 0) {
+		  setMeterData(readings);
+		  setShowReadingsTable(true);
+		  setShowDiscrepancyReport(true);
+		} else if (error !== "") {
+		  setSnackbarSeverity("error");
+		  setSnackbarMessage(error);
+		  setSnackbarOpen(true);
+		} else if (message !== "") {
+		  setSnackbarSeverity("success");
+		  setSnackbarMessage(message);
+		  setSnackbarOpen(true);
+		}
 	  }
 	} catch (err) {
-	  // If the timeout promise rejects, handle the error here
-	  setSnackbarSeverity('error');
-	  setSnackbarMessage("Request timed out. Please try again later");
+	  // Other errors
+	  setSnackbarSeverity("error");
+	  setSnackbarMessage("Failed to fetch data. Please try again later.");
 	  setSnackbarOpen(true);
 	} finally {
 	  setIsLoading(false);
