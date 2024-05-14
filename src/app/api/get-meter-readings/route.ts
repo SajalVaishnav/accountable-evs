@@ -1,6 +1,8 @@
 import { getMeterReadings } from "@/server/MeterReadings";
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 // Get meter readings for a meter, given meterId and password
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // get meterId and password from request body

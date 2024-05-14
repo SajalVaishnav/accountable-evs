@@ -1,6 +1,8 @@
 import { getLatestReading } from "@/server/MeterReadings";
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const { meterId, password } = await request.json();
 
