@@ -48,7 +48,7 @@ const getMeterCreditFromAuthCookie = async (cookie: string[]): Promise<number> =
   return parseRemainingCredit(response.data);
 };
 
-const getAuthStatusAndCookie = async (meterId: string, password: string): Promise<{ authStatus: boolean; cookie: string[] | undefined }> => {
+export const getAuthStatusAndCookie = async (meterId: string, password: string): Promise<{ authStatus: boolean; cookie: string[] | undefined }> => {
   const config = getAuthRequestConfig(meterId, password);
   const response = await axios(config);
   const cookie = response.headers["set-cookie"];

@@ -37,23 +37,46 @@ const MainPage = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMeterData(null);
-    setShowReadingsTable(false);
-    setShowDiscrepancyReport(false);
-    setIsLoading(true);
-
-	const { readings, error} = await getMeterReadings(meterId, password);
-    if (readings) {
-      setMeterData(readings);
-      setShowReadingsTable(true);
-      setShowDiscrepancyReport(true);
-    } else {
-      setSnackbarSeverity('error');
-	  setSnackbarMessage(error);
-      setSnackbarOpen(true);
-    } 
-      setIsLoading(false);
+	e.preventDefault();
+  
+	setMeterData(null);
+	setShowReadingsTable(false);
+	setShowDiscrepancyReport(false);
+	setIsLoading(true);
+  
+	// Create a timeout promise that rejects after 30 seconds
+	const timeout = new Promise((_, reject) =>
+	  setTimeout(() => reject(new Error('Request timed out')), 30000)
+	);
+  
+	try {
+	  // Use Promise.race to wait for either getMeterReadings or the timeout promise
+	  const { readings, error, message } = await Promise.race([
+		getMeterReadings(meterId, password),
+		timeout,
+	  ]);
+  
+	  if (readings && readings.length > 0) {
+		setMeterData(readings);
+		setShowReadingsTable(true);
+		setShowDiscrepancyReport(true);
+	  } else if (error !== "") {
+		setSnackbarSeverity('error');
+		setSnackbarMessage(error);
+		setSnackbarOpen(true);
+	  } else if (message !== "") {
+		setSnackbarSeverity('success');
+		setSnackbarMessage(message);
+		setSnackbarOpen(true);
+	  }
+	} catch (err) {
+	  // If the timeout promise rejects, handle the error here
+	  setSnackbarSeverity('error');
+	  setSnackbarMessage("Request timed out. Please try again later");
+	  setSnackbarOpen(true);
+	} finally {
+	  setIsLoading(false);
+	}
   };
 
   const sendComplaintEmail = async (emailBody: string) => {

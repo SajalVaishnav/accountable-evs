@@ -3,12 +3,14 @@
 import { AuthenticationError } from "@/app/common/Error/Errors";
 import { MeterData } from "@/app/page";
 import prisma from "@/prisma/prismaSingleton";
-import { getMeterCreditFromMeteridPassword } from "@/server/EvsCrawler";
+import { getAuthStatusAndCookie, getMeterCreditFromMeteridPassword } from "@/server/EvsCrawler";
+import { Meter } from "@prisma/client";
 
 const READING_EXPIRATION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 interface ServerResponse {
   error: string;
+  message: string;
 }
 
 interface MeterReadingsResponse extends ServerResponse {
@@ -35,20 +37,25 @@ export const getMeterReadings = async (
 
   if (!meter) {
     try {
-      const reading = await createNewMeterAndReading(meterId, password);
-      return { readings: [reading], error: "" };
+      await createNewMeter(meterId, password);
+      return { readings: null, error: "", message: "meter added, no readings yet"};
     } catch (error) {
       if (error instanceof AuthenticationError) {
-        return { readings: null, error: "AuthError: Invalid meterId or password" };
+        return { readings: null, error: "AuthError: Invalid meterId or password", message: ""};
       }
       return {
         readings: null,
         error: `Failed to get meter readings for meter ${meterId}`,
+		message: "",
       };
     }
   }
 
-  return { readings: meter.meterReadings, error: "" };
+  if (meter.meterReadings.length === 0) {
+	return { readings: null, error: "No readings yet. We try to fetch a reading every 24 hours.", message: ""};
+  }
+
+  return { readings: meter.meterReadings, error: "", message: "success"};
 };
 
 export const getLatestReading = async (
@@ -73,14 +80,15 @@ export const getLatestReading = async (
   if (!meter) {
     try {
 		const reading = await createNewMeterAndReading(meterId, password);
-		return { reading: reading, error: "" };
+		return { reading: reading, error: "", message: "success"};
 	  } catch (error) {
 		if (error instanceof AuthenticationError) {
-		  return { reading: null, error: "AuthError" };
+		  return { reading: null, error: "AuthError", message: ""};
 		}
 		return {
 		  reading: null,
 		  error: `Failed to get meter readings for meter ${meterId}`,
+		  message: "",
 		};
 	  }
   }
@@ -90,7 +98,7 @@ export const getLatestReading = async (
   const currentTime = Date.now();
 
   if (currentTime - lastReadingUpdatedAt < READING_EXPIRATION_DURATION) {
-    return { reading: latestReading, error: "" };
+    return { reading: latestReading, error: "", message: "success"};
   }
 
   const newReading = await getMeterCreditFromMeteridPassword(meterId, password);
@@ -111,7 +119,7 @@ export const getLatestReading = async (
     },
   });
 
-  return { reading: createdReading, error: "" };
+  return { reading: createdReading, error: "", message: "success"};
 };
 
 const createNewMeterAndReading = async (meterId: string, password: string): Promise<MeterData> => {
@@ -135,3 +143,20 @@ const createNewMeterAndReading = async (meterId: string, password: string): Prom
 
   return {id: createdReading.id, meterId: createdReading.meterId, createdAt: createdReading.createdAt, reading: createdReading.reading};
 };
+
+const createNewMeter = async (meterId: string, password: string): Promise<Meter> => {
+	// check if meter and password is valid
+	const { authStatus, cookie } = await getAuthStatusAndCookie(meterId, password)
+	if (!authStatus || !cookie) {
+		throw new AuthenticationError(meterId);
+	}
+
+	const createdMeter = await prisma.meter.create({
+		data: {
+			meterId,
+			password,
+		},
+	});
+
+	return createdMeter
+}
